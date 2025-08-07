@@ -1,0 +1,109 @@
+name: big-bear-n8n
+services:
+  app:
+    container_name: n8n
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db-n8n:
+        condition: service_healthy
+        required: true
+    environment:
+      - BASE_URL=https://n8n.brianramdhani.my.id
+      - DB_TYPE=postgres
+      - DB_POSTGRESDB_HOST=db-n8n
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=bigbearcasaos
+      - DB_POSTGRESDB_PASSWORD=bigbearcasaos
+      - N8N_COMMUNITY_PACKAGES_ENABLED=true
+      - WEBHOOK_URL=https://n8n.brianramdhani.my.id
+      - N8N_SECURE_COOKIE=false
+      - TZ=Asia/Jakarta
+      - GENERIC_TIMEZONE=Asia/Jakarta
+      - N8N_PERSONAL_API_KEYS=12345
+    ports:
+      - "5678:5678"
+    volumes:
+    - type: bind
+      source: /root/.ssh
+      target: /home/node/.ssh
+      read_only: false
+      bind:
+        create_host_path: true
+      - type: bind
+        source: /DATA/AppData/n8n-file/.n8n
+        target: /home/node/.n8n
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /DATA/AppData/n8n-file/local-files
+        target: /home/user/local-files
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /DATA/AppData/n8n-file/ssh
+        target: /home/node/.ssh
+        read_only: false
+        bind:
+          create_host_path: true
+      
+    restart: unless-stopped
+    networks:
+      - default
+
+  db-n8n:
+    container_name: db-n8n
+    image: postgres:14.2
+    environment:
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=bigbearcasaos
+      - POSTGRES_PASSWORD=bigbearcasaos
+    volumes:
+    - type: bind
+      source: /root/.ssh
+      target: /home/node/.ssh
+      read_only: false
+      bind:
+        create_host_path: true
+      - type: bind
+        source: /DATA/AppData/n8n-file/pgdata
+        target: /Data/postgresql/data
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /DATA/AppData/n8n-file/db/init-data.sh
+        target: /docker-entrypoint-initdb.d/init-data.sh
+        bind:
+          create_host_path: true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bigbearcasaos -d n8n"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - default
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@brianramdhani.my.id
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+    ports:
+      - "9432:80"
+    volumes:
+      - type: bind
+        source: /DATA/AppData/big-bear-n8n/pgadmin
+        target: /Data/postgree/pgadmin
+        bind:
+          create_host_path: true
+    restart: unless-stopped
+    networks:
+      - default
+
+networks:
+  default:
+    name: big-bear-n8n_default
