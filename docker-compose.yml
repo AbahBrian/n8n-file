@@ -26,26 +26,10 @@ services:
     ports:
       - "5678:5678"
     volumes:
-    - type: bind
-      source: /root/.ssh
-      target: /home/node/.ssh
-      read_only: false
-      bind:
-        create_host_path: true
-      - type: bind
-        source: /DATA/AppData/n8n-file/.n8n
-        target: /home/node/.n8n
-        bind:
-          create_host_path: true
+      - /DATA/AppData/n8n-file/.n8n:/home/node/.n8n
       - type: bind
         source: /DATA/AppData/n8n-file/local-files
         target: /home/user/local-files
-        bind:
-          create_host_path: true
-      - type: bind
-        source: /DATA/AppData/n8n-file/ssh
-        target: /home/node/.ssh
-        read_only: false
         bind:
           create_host_path: true
       
@@ -62,20 +46,14 @@ services:
       - POSTGRES_PASSWORD=bigbearcasaos
     volumes:
     - type: bind
-      source: /root/.ssh
-      target: /home/node/.ssh
-      read_only: false
+      source: /DATA/AppData/n8n-file/pgdata
+      target: /Data/postgresql/data
       bind:
-        create_host_path: true
-      - type: bind
-        source: /DATA/AppData/n8n-file/pgdata
-        target: /Data/postgresql/data
-        bind:
           create_host_path: true
-      - type: bind
-        source: /DATA/AppData/n8n-file/db/init-data.sh
-        target: /docker-entrypoint-initdb.d/init-data.sh
-        bind:
+    - type: bind
+      source: /DATA/AppData/n8n-file/db/init-data.sh
+      target: /docker-entrypoint-initdb.d/init-data.sh
+      bind:
           create_host_path: true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U bigbearcasaos -d n8n"]
@@ -106,4 +84,4 @@ services:
 
 networks:
   default:
-    name: big-bear-n8n_default
+    name: n8n
